@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AegisVault — Password Manager Using AES-256 Encryption & CNS Security Suite</title>
+    <meta name="description" content="Industrial-grade Zero-Knowledge Password Manager and Cryptography & Network Security (CNS) Suite implementing AES-256-GCM, PBKDF2-HMAC-SHA256, and interactive visual cipher rounds.">
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome Icons for crisp cyber glyphs -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+    <!-- Ambient Cyber Matrix Canvas -->
+    <canvas id="matrixCanvas"></canvas>
+
+    <div class="app-container">
+
+        <!-- ====================================================================
+             1. APP HEADER & NAVIGATION
+             ==================================================================== -->
+        <header class="app-header">
+            <div class="header-inner">
+                <div class="brand-section">
+                    <div class="brand-logo-icon">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div class="brand-titles">
+                        <h1>AEGIS-VAULT</h1>
+                        <span class="brand-badge">
+                            <i class="fa-solid fa-lock"></i> AES-256-GCM AEAD / CNS PROTOCOL
+                        </span>
+                    </div>
+                </div>
+
+                <div class="header-status-group">
+                    <div class="status-pill" title="Master key in volatile RAM only">
+                        <div class="status-dot" id="statusDot"></div>
+                        <span id="statusText">Vault Active</span>
+                    </div>
+                    <div class="status-pill" id="autoLockTimerPill" title="Inactivity lock countdown">
+                        <i class="fa-solid fa-stopwatch text-cyan"></i>
+                        <span id="autoLockTimer">Auto-Lock: 5:00</span>
+                    </div>
+                    <button class="btn-lock" id="btnLockVault" title="Immediately purge encryption keys from memory">
+                        <i class="fa-solid fa-lock"></i> Lock Vault
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs Bar -->
+            <nav class="nav-tabs-bar" aria-label="Main Navigation">
+                <button class="tab-btn active" data-tab="tab-vault" id="navTabVault">
+                    <i class="fa-solid fa-vault"></i> Password Vault
+                </button>
+                <button class="tab-btn" data-tab="tab-generator" id="navTabGenerator">
+                    <i class="fa-solid fa-key"></i> Generator & Entropy
+                </button>
+                <button class="tab-btn" data-tab="tab-audit" id="navTabAudit">
+                    <i class="fa-solid fa-shield-virus"></i> Security Audit
+                </button>
+                <button class="tab-btn" data-tab="tab-visualizer" id="navTabVisualizer">
+                    <i class="fa-solid fa-microchip"></i> AES-256 Lab & Visualizer
+                </button>
+                <button class="tab-btn" data-tab="tab-attacks" id="navTabAttacks">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Threat Simulator
+                </button>
+                <button class="tab-btn" data-tab="tab-theory" id="navTabTheory">
+                    <i class="fa-solid fa-book-bookmark"></i> CNS Theory & Viva
+                </button>
+            </nav>
+        </header>
+
+        <!-- ====================================================================
+             2. MAIN APPLICATION CONTENT
+             ==================================================================== -->
+        <main class="main-wrapper">
+
+            <!-- ----------------------------------------------------------------
+                 TAB 1: PASSWORD VAULT
+                 ---------------------------------------------------------------- -->
+            <section class="tab-panel active" id="tab-vault">
+                <!-- Vault Hero Banner -->
+                <div class="vault-header-hero">
+                    <img src="assets/banner.jpg" alt="Cybersecurity Secure Vault Banner" class="hero-banner-img">
+                    <div class="hero-content">
+                        <div class="hero-titles">
+                            <h2>Zero-Knowledge Encrypted Vault</h2>
+                            <p>Encrypted on-the-fly using 256-bit Galois/Counter Mode (AES-GCM). Cryptographic keys are derived in volatile memory via PBKDF2 (600,000 SHA-256 iterations) with 256-bit CSPRNG salt.</p>
+                        </div>
+                        <div class="hero-stats">
+                            <div class="hero-stat-card">
+                                <div class="hero-stat-number" id="statTotalItems">0</div>
+                                <div class="hero-stat-label">Total Items</div>
+                            </div>
+                            <div class="hero-stat-card">
+                                <div class="hero-stat-number" id="statHealthScore">100%</div>
+                                <div class="hero-stat-label">Health Score</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vault Action Toolbar -->
+                <div class="vault-toolbar">
+                    <div class="search-filter-group">
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="vaultSearchInput" class="search-input" placeholder="Search encrypted credentials, tags, or usernames...">
+                        </div>
+                        <div class="filter-pills" id="categoryFilterContainer">
+                            <button class="filter-pill-btn active" data-category="all">All</button>
+                            <button class="filter-pill-btn" data-category="login">Logins</button>
+                            <button class="filter-pill-btn" data-category="card">Cards</button>
+                            <button class="filter-pill-btn" data-category="note">Secure Notes</button>
+                            <button class="filter-pill-btn" data-category="api">API Keys</button>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons-group">
+                        <button class="btn-primary" id="btnAddNewItem">
+                            <i class="fa-solid fa-plus"></i> New Credential
+                        </button>
+                        <button class="btn-secondary" id="btnExportVault">
+                            <i class="fa-solid fa-file-export"></i> Export Encrypted
+                        </button>
+                        <button class="btn-secondary" id="btnImportVault">
+                            <i class="fa-solid fa-file-import"></i> Import Vault
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Vault Credentials Grid -->
+                <div class="vault-items-grid" id="vaultItemsGrid">
+                    <!-- Populated dynamically via app.js -->
+                </div>
+            </section>
+
+            <!-- ----------------------------------------------------------------
+                 TAB 2: GENERATOR & ENTROPY LAB
+                 ---------------------------------------------------------------- -->
+            <section class="tab-panel" id="tab-generator">
+                <div class="generator-layout">
+                    <!-- Left: Generator Controls -->
+                    <div class="glass-panel">
+                        <h3 style="font-size: 1.3rem; margin-bottom: 8px;">
+                            <i class="fa-solid fa-key text-cyan"></i> Cryptographic Password Generator
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">
+                            Generates truly uniform random tokens using hardware CSPRNG (<code>crypto.getRandomValues</code>) with rejection sampling to eliminate modulo bias.
+                        </p>
+
+                        <!-- Display Card -->
+                        <div class="generated-output-card">
+                            <div class="output-value-display" id="generatedPasswordDisplay">
+                                Generating...
+                            </div>
+                            <div class="output-actions-bar">
+                                <span class="entropy-chip" id="genEntropyBadge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                                    <i class="fa-solid fa-bolt"></i> 84.5 bits entropy
+                                </span>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-secondary" id="btnRegeneratePassword" title="Regenerate random token">
+                                        <i class="fa-solid fa-arrows-rotate"></i> Regenerate
+                                    </button>
+                                    <button class="btn-primary" id="btnCopyGeneratedPassword">
+                                        <i class="fa-solid fa-copy"></i> Copy Token
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Generator Options -->
+                        <div class="gen-controls-grid">
+                            <div class="control-row">
+                                <span style="font-weight: 600; font-size: 0.9rem;">Generation Mode</span>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="filter-pill-btn active" id="modeRandomChars">Random Characters</button>
+                                    <button class="filter-pill-btn" id="modeDiceware">Diceware Passphrase</button>
+                                </div>
+                            </div>
+
+                            <div class="control-row" id="lengthControlRow">
+                                <span style="font-weight: 600; font-size: 0.9rem;">Password Length</span>
+                                <div class="slider-container">
+                                    <input type="range" id="genLengthSlider" class="range-slider" min="8" max="64" value="20">
+                                    <span class="slider-val-badge" id="genLengthVal">20</span>
+                                </div>
+                            </div>
+
+                            <div class="control-row" id="wordsControlRow" style="display: none;">
+                                <span style="font-weight: 600; font-size: 0.9rem;">Word Count</span>
+                                <div class="slider-container">
+                                    <input type="range" id="genWordsSlider" class="range-slider" min="3" max="8" value="5">
+                                    <span class="slider-val-badge" id="genWordsVal">5</span>
+                                </div>
+                            </div>
+
+                            <div class="control-row" id="charTogglesRow">
+                                <label class="switch-label">
+                                    <input type="checkbox" id="chkUpper" class="switch-input" checked>
+                                    <span class="switch-slider"></span>
+                                    <span>Uppercase (A-Z)</span>
+                                </label>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="chkLower" class="switch-input" checked>
+                                    <span class="switch-slider"></span>
+                                    <span>Lowercase (a-z)</span>
+                                </label>
+                            </div>
+
+                            <div class="control-row" id="charTogglesRow2">
+                                <label class="switch-label">
+                                    <input type="checkbox" id="chkDigits" class="switch-input" checked>
+                                    <span class="switch-slider"></span>
+                                    <span>Digits (0-9)</span>
+                                </label>
+                                <label class="switch-label">
+                                    <input type="checkbox" id="chkSymbols" class="switch-input" checked>
+                                    <span class="switch-slider"></span>
+                                    <span>Symbols (!@#$)</span>
+                                </label>
+                            </div>
+
+                            <div class="control-row">
+                                <label class="switch-label">
+                                    <input type="checkbox" id="chkAvoidAmbiguous" class="switch-input" checked>
+                                    <span class="switch-slider"></span>
+                                    <span>Exclude Ambiguous Characters (l, 1, I, o, 0, O)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Shannon Entropy & Attack Calculator -->
+                    <div class="glass-panel">
+                        <h3 style="font-size: 1.25rem; margin-bottom: 8px;">
+                            <i class="fa-solid fa-chart-line text-cyan"></i> Shannon Entropy Analysis
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.88rem;">
+                            Mathematical formula: <code>H = L &times; log<sub>2</sub>(N)</code> (Entropy in bits).
+                        </p>
+
+                        <div style="margin: 20px 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                                <span style="font-weight: 700; font-size: 1.8rem; font-family: var(--font-mono); color: var(--neon-cyan);" id="entropyNumberDisplay">84.5 bits</span>
+                                <span style="font-weight: 600;" id="entropyRatingDisplay">Strong</span>
+                            </div>
+                            <div class="entropy-meter-bar-container">
+                                <div class="entropy-meter-fill" id="entropyMeterFill"></div>
+                            </div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+                                <span>0 bits (Trivial)</span>
+                                <span>60 bits (Standard)</span>
+                                <span>100+ bits (Unbreakable)</span>
+                            </div>
+                        </div>
+
+                        <h4 style="font-size: 0.95rem; margin-top: 24px; color: #fff;">
+                            <i class="fa-solid fa-calculator text-cyan"></i> Estimated Brute-Force Crack Times
+                        </h4>
+                        <table class="crack-times-table">
+                            <thead>
+                                <tr>
+                                    <th>Adversary Model</th>
+                                    <th>Speed</th>
+                                    <th>Time to Crack</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Online Web Throttled</strong></td>
+                                    <td><span class="threat-speed-tag">100 / sec</span></td>
+                                    <td id="crackTimeOnline" style="color: var(--neon-emerald); font-family: var(--font-mono);">Centuries</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fast Offline Single GPU</strong></td>
+                                    <td><span class="threat-speed-tag">10M / sec</span></td>
+                                    <td id="crackTimeFastGpu" style="color: var(--neon-cyan); font-family: var(--font-mono);">5.4 thousand years</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Distributed GPU Cluster</strong></td>
+                                    <td><span class="threat-speed-tag">100B / sec</span></td>
+                                    <td id="crackTimeCluster" style="color: var(--neon-amber); font-family: var(--font-mono);">12 years</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Quantum / Supercluster</strong></td>
+                                    <td><span class="threat-speed-tag">1PetaOps/s</span></td>
+                                    <td id="crackTimeQuantum" style="font-family: var(--font-mono);">4.2 days</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ----------------------------------------------------------------
+                 TAB 3: SECURITY AUDIT & HEALTH
+                 ---------------------------------------------------------------- -->
+            <section class="tab-panel" id="tab-audit">
+                <div class="glass-panel" style="margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                        <div>
+                            <h2 style="font-size: 1.5rem; margin-bottom: 4px;">
+                                <i class="fa-solid fa-shield-virus text-cyan"></i> Cryptographic Health & Vulnerability Audit
+                            </h2>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                                Live vulnerability scan evaluating entropy distribution, credential reuse, stale records, and k-Anonymity breach status.
+                            </p>
+                        </div>
+                        <button class="btn-primary" id="btnRunAuditScan">
+                            <i class="fa-solid fa-radar"></i> Re-scan Vault
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Audit Metric Cards -->
+                <div class="audit-overview-grid">
+                    <div class="audit-metric-card">
+                        <div class="metric-icon-box" style="background: rgba(16, 185, 129, 0.15); color: var(--neon-emerald);">
+                            <i class="fa-solid fa-heart-pulse"></i>
+                        </div>
+                        <div class="metric-score-box">
+                            <div class="metric-big-val" id="auditScoreVal" style="color: var(--neon-emerald);">94%</div>
+                            <div class="metric-title">Security Score</div>
+                        </div>
+                    </div>
+
+                    <div class="audit-metric-card">
+                        <div class="metric-icon-box" style="background: rgba(239, 68, 68, 0.15); color: var(--neon-coral);">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div class="metric-score-box">
+                            <div class="metric-big-val" id="auditWeakCount" style="color: var(--neon-coral);">0</div>
+                            <div class="metric-title">Weak Passwords</div>
+                        </div>
+                    </div>
+
+                    <div class="audit-metric-card">
+                        <div class="metric-icon-box" style="background: rgba(245, 158, 11, 0.15); color: var(--neon-amber);">
+                            <i class="fa-solid fa-clone"></i>
+                        </div>
+                        <div class="metric-score-box">
+                            <div class="metric-big-val" id="auditReusedCount" style="color: var(--neon-amber);">0</div>
+                            <div class="metric-title">Reused Passwords</div>
+                        </div>
+                    </div>
+
+                    <div class="audit-metric-card">
+                        <div class="metric-icon-box" style="background: rgba(139, 92, 246, 0.15); color: var(--neon-purple);">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                        <div class="metric-score-box">
+                            <div class="metric-big-val" id="auditOldCount" style="color: var(--neon-purple);">0</div>
+                            <div class="metric-title">Stale (>90 Days)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detected Issues List -->
+                <div class="glass-panel">
+                    <h3 style="font-size: 1.15rem; margin-bottom: 12px; color: #fff;">
+                        <i class="fa-solid fa-list-check text-cyan"></i> Actionable Vulnerabilities & Remediation
+                    </h3>
+                    <div class="audit-issues-list" id="auditIssuesList">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ----------------------------------------------------------------
+                 TAB 4: AES-256 VISUALIZER & CRYPTO LAB
+                 ---------------------------------------------------------------- -->
+            <section class="tab-panel" id="tab-visualizer">
+                <div class="glass-panel" style="margin-bottom: 24px;">
+                    <h2 style="font-size: 1.5rem; margin-bottom: 6px;">
+                        <i class="fa-solid fa-microchip text-cyan"></i> Interactive AES-256 State Visualizer & Crypto Lab
+                    </h2>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Inspect the 4 core transformations of the Rijndael block cipher step-by-step: <strong>SubBytes</strong> (Galois Field S-Box), <strong>ShiftRows</strong> (Permutation), <strong>MixColumns</strong> (Matrix multiplication in GF(2<sup>8</sup>)), and <strong>AddRoundKey</strong> (XOR).
+                    </p>
+                </div>
+
+                <!-- Live AES Input Sandbox -->
+                <div class="crypto-lab-controls">
+                    <div class="lab-input-group">
+                        <label for="labPlaintextInput">Plaintext Block (16 Chars / 128 Bits)</label>
+                        <input type="text" id="labPlaintextInput" class="lab-text-input" value="AegisSec2026Lab!">
+                    </div>
+                    <div class="lab-input-group">
+                        <label for="labKeyInput">AES-256 Key (Hex or Text, 256 Bits)</label>
+                        <input type="text" id="labKeyInput" class="lab-text-input" value="MasterAES256SecurityProjectKey!">
+                    </div>
+                    <button class="btn-primary" id="btnRunAesSimulation" style="align-self: flex-end; height: 42px;">
+                        <i class="fa-solid fa-play"></i> Simulate 14 Rounds
+                    </button>
+                </div>
+
+                <!-- Round Stepper Bar -->
+                <div class="aes-round-stepper">
+                    <button class="btn-secondary" id="btnPrevRound">
+                        <i class="fa-solid fa-arrow-left"></i> Previous Round
+                    </button>
+                    <div class="stepper-info" style="text-align: center;">
+                        <h4 id="currentRoundTitle">Round 1 of 14</h4>
+                        <p id="currentRoundDesc">Standard round executing SubBytes, ShiftRows, MixColumns, and AddRoundKey.</p>
+                    </div>
+                    <button class="btn-primary" id="btnNextRound">
+                        Next Round <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- State Matrix Visualizer Grid -->
+                <div class="state-matrix-container">
+                    <!-- Matrix 1: Input State -->
+                    <div class="matrix-card">
+                        <div class="matrix-card-title">
+                            <i class="fa-solid fa-table-cells text-cyan"></i> 1. State Input
+                        </div>
+                        <div class="matrix-4x4-grid" id="matrixStateInput">
+                            <!-- 16 cells -->
+                        </div>
+                    </div>
+
+                    <!-- Matrix 2: After SubBytes -->
+                    <div class="matrix-card">
+                        <div class="matrix-card-title">
+                            <i class="fa-solid fa-arrow-right-arrow-left text-emerald"></i> 2. SubBytes (S-Box)
+                        </div>
+                        <div class="matrix-4x4-grid" id="matrixStateSubBytes">
+                            <!-- 16 cells -->
+                        </div>
+                    </div>
+
+                    <!-- Matrix 3: After ShiftRows -->
+                    <div class="matrix-card">
+                        <div class="matrix-card-title">
+                            <i class="fa-solid fa-shuffle text-cyan"></i> 3. ShiftRows
+                        </div>
+                        <div class="matrix-4x4-grid" id="matrixStateShiftRows">
+                            <!-- 16 cells -->
+                        </div>
+                    </div>
+
+                    <!-- Matrix 4: After MixColumns -->
+                    <div class="matrix-card">
+                        <div class="matrix-card-title">
+                            <i class="fa-solid fa-chart-column text-amber"></i> 4. MixColumns in GF(2<sup>8</sup>)
+                        </div>
+                        <div class="matrix-4x4-grid" id="matrixStateMixColumns">
+                            <!-- 16 cells -->
+                        </div>
+                    </div>
+
+                    <!-- Matrix 5: After AddRoundKey -->
+                    <div class="matrix-card">
+                        <div class="matrix-card-title">
+                            <i class="fa-solid fa-plus-minus text-purple"></i> 5. AddRoundKey (XOR &oplus;)
+                        </div>
+                        <div class="matrix-4x4-grid" id="matrixStateAddRoundKey">
+                            <!-- 16 cells -->
+                        </div>
+                    </div>
+
+                    <!-- Matrix 6: Round Subkey Matrix -->
+                    <div class="matrix-card">
+                        <div class="matrix-card-title">
+                            <i class="fa-solid fa-key text-cyan"></i> Round Subkey (Expansion)
+                        </div>
+                        <div class="matrix-4x4-grid" id="matrixRoundKey">
+                            <!-- 16 cells -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ----------------------------------------------------------------
+                 TAB 5: THREAT SIMULATOR
+                 ---------------------------------------------------------------- -->
+            <section class="tab-panel" id="tab-attacks">
+                <div class="glass-panel" style="margin-bottom: 24px;">
+                    <h2 style="font-size: 1.5rem; margin-bottom: 6px;">
+                        <i class="fa-solid fa-triangle-exclamation text-cyan"></i> Network Security & Cryptographic Threat Simulator
+                    </h2>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Live interactive laboratory demonstrating attack vectors against encrypted network traffic and block cipher implementations.
+                    </p>
+                </div>
+
+                <div class="attack-cards-grid">
+                    <!-- Demo 1: Bit-Flipping / Tampering Attack -->
+                    <div class="glass-panel">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h3 style="font-size: 1.15rem; color: #fff;">
+                                <i class="fa-solid fa-bug text-coral"></i> 1. Ciphertext Bit-Flipping Attack
+                            </h3>
+                            <span class="brand-badge" style="color: var(--neon-coral); border-color: rgba(239, 68, 68, 0.3);">
+                                Integrity Test
+                            </span>
+                        </div>
+                        <p style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 14px;">
+                            Simulates an active Man-in-the-Middle (MitM) attacker altering a single bit in the ciphertext during transmission.
+                        </p>
+
+                        <div class="form-group">
+                            <label for="tamperPlaintextInput">Original Sensitive Message</label>
+                            <input type="text" id="tamperPlaintextInput" class="form-input" value="TRANSFER $10,000 TO ACCOUNT #4421">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tamperByteIndex">Byte Index to Tamper (0 to 31)</label>
+                            <input type="number" id="tamperByteIndex" class="form-input" min="0" max="31" value="5">
+                        </div>
+
+                        <button class="btn-primary" id="btnRunTamperAttack" style="width: 100%; margin-top: 6px;">
+                            <i class="fa-solid fa-bolt"></i> Intercept, Flip Bit & Attempt Decryption
+                        </button>
+
+                        <div id="tamperAttackResultBox" style="display: none;">
+                            <!-- Output rendered via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Demo 2: Nonce-Reuse Disaster Demo -->
+                    <div class="glass-panel">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h3 style="font-size: 1.15rem; color: #fff;">
+                                <i class="fa-solid fa-repeat text-amber"></i> 2. Nonce-Reuse Disaster (CTR Mode)
+                            </h3>
+                            <span class="brand-badge" style="color: var(--neon-amber); border-color: rgba(245, 158, 11, 0.3);">
+                                Fatal Vulnerability
+                            </span>
+                        </div>
+                        <p style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 14px;">
+                            Shows the catastrophic result of reusing a 96-bit Nonce/IV across two encryptions: <code>C1 &oplus; C2 = P1 &oplus; P2</code>, completely exposing plaintext relationships!
+                        </p>
+
+                        <div class="form-group">
+                            <label for="nonceMsg1">Encrypted Message #1</label>
+                            <input type="text" id="nonceMsg1" class="form-input" value="CONFIDENTIAL_FINANCIAL_REPORTS">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nonceMsg2">Encrypted Message #2 (Same IV!)</label>
+                            <input type="text" id="nonceMsg2" class="form-input" value="AUTHORIZE_HIGH_PRIVILEGE_TOKEN">
+                        </div>
+
+                        <button class="btn-primary" id="btnRunNonceAttack" style="width: 100%; margin-top: 6px; background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="fa-solid fa-radiation"></i> Execute Nonce Reuse Analysis
+                        </button>
+
+                        <div id="nonceAttackResultBox" style="display: none;">
+                            <!-- Output rendered via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Demo 3: PBKDF2 Work-Factor & GPU Cluster Benchmark -->
+                    <div class="glass-panel" style="grid-column: 1 / -1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                            <div>
+                                <h3 style="font-size: 1.15rem; color: #fff;">
+                                    <i class="fa-solid fa-gauge-high text-cyan"></i> 3. KDF Work-Factor & GPU Cluster Benchmark
+                                </h3>
+                                <p style="font-size: 0.86rem; color: var(--text-secondary);">
+                                    Empirically tests key stretching overhead on your hardware and calculates brute-force resistance against an 8x RTX 4090 GPU rig.
+                                </p>
+                            </div>
+                            <button class="btn-primary" id="btnRunKdfBenchmark">
+                                <i class="fa-solid fa-microchip"></i> Run Live KDF Benchmark
+                            </button>
+                        </div>
+
+                        <div id="kdfBenchmarkOutput" style="overflow-x: auto;">
+                            <p style="color: var(--text-muted); font-size: 0.9rem; padding: 20px 0; text-align: center;">
+                                Click "Run Live KDF Benchmark" to evaluate client derivation latency vs GPU cluster hash rate.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ----------------------------------------------------------------
+                 TAB 6: CNS THEORY & VIVA VOCE
+                 ---------------------------------------------------------------- -->
+            <section class="tab-panel" id="tab-theory">
+                <div class="glass-panel" style="margin-bottom: 24px;">
+                    <h2 style="font-size: 1.5rem; margin-bottom: 6px;">
+                        <i class="fa-solid fa-book-bookmark text-cyan"></i> Cryptography & Network Security (CNS) Academic Dossier
+                    </h2>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Theoretical foundations, mathematical equations, block cipher comparison, STRIDE threat model, and comprehensive Viva Voce questions & answers for university examinations.
+                    </p>
+                </div>
+
+                <!-- Theory Accordion -->
+                <div class="theory-accordion" id="theoryAccordion">
+                    <!-- Q1 -->
+                    <div class="viva-item open">
+                        <div class="viva-question">
+                            <span>1. What is AES and why is AES-256-GCM selected over AES-CBC or AES-ECB?</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="viva-answer">
+                            <p><strong>Advanced Encryption Standard (AES)</strong>, originally named Rijndael, is a symmetric block cipher standardized by NIST in 2001 (FIPS 197). It operates on 128-bit blocks using key sizes of 128, 192, or 256 bits.</p>
+                            <p style="margin-top: 8px;"><strong>Comparison of Modes:</strong></p>
+                            <ul style="margin-left: 20px; margin-top: 6px;">
+                                <li><strong>ECB (Electronic Codebook):</strong> Insecure! Encrypts identical plaintext blocks into identical ciphertext blocks, preserving patterns (e.g., the famous ECB Tux penguin leak).</li>
+                                <li><strong>CBC (Cipher Block Chaining):</strong> Provides confidentiality but <em>no integrity</em>. Vulnerable to padding oracle attacks (e.g., POODLE) unless paired with Encrypt-then-MAC (HMAC-SHA256).</li>
+                                <li><strong>GCM (Galois/Counter Mode):</strong> The gold standard in modern network security (used in TLS 1.3). It is an <strong>AEAD</strong> (Authenticated Encryption with Associated Data) mode that provides both high-speed stream cipher encryption (Counter mode) and hardware-accelerated cryptographic integrity authentication using a 128-bit GHASH over Galois Field <code>GF(2<sup>128</sup>)</code>.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="viva-item">
+                        <div class="viva-question">
+                            <span>2. Explain the 4 internal transformations executed in each round of AES.</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="viva-answer">
+                            <ol style="margin-left: 20px;">
+                                <li><strong>SubBytes (Non-linearity / Confusion):</strong> Each byte in the 4&times;4 state matrix is substituted using an 8-bit S-Box. The S-Box is constructed by finding the multiplicative inverse in Galois Field <code>GF(2<sup>8</sup>)</code> with irreducible polynomial <code>m(x) = x<sup>8</sup> + x<sup>4</sup> + x<sup>3</sup> + x + 1 (0x11B)</code>, followed by an affine transformation to prevent fixed points.</li>
+                                <li><strong>ShiftRows (Permutation / Diffusion):</strong> Rows of the state matrix are cyclically shifted to the left: Row 0 shifted by 0, Row 1 by 1, Row 2 by 2, and Row 3 by 3 bytes. This ensures bytes in each column spread across multiple columns.</li>
+                                <li><strong>MixColumns (Diffusion):</strong> Each 4-byte column is multiplied by a fixed polynomial matrix over <code>GF(2<sup>8</sup>)</code> with maximum branch number 5. This provides the avalanche effect (a 1-bit change affects all 4 bytes of the column). <em>Note: MixColumns is omitted in the final round (Round 14) to maintain decryption symmetry.</em></li>
+                                <li><strong>AddRoundKey:</strong> The 128-bit state matrix is combined with the 128-bit round subkey via bitwise XOR (<code>&oplus;</code>). The subkeys are generated from the master 256-bit key via the Key Expansion algorithm using <code>RotWord</code>, <code>SubWord</code>, and round constants <code>Rcon</code>.</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="viva-item">
+                        <div class="viva-question">
+                            <span>3. What is a Zero-Knowledge Architecture in Password Managers?</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="viva-answer">
+                            <p>In a <strong>Zero-Knowledge</strong> password manager, the service provider (server or storage backend) has zero mathematical knowledge of the user's master password, derived encryption keys, or plaintext vault data.</p>
+                            <p style="margin-top: 8px;">All cryptographic operations (Key Derivation via PBKDF2, AES-GCM encryption, and decryption) execute strictly client-side inside the user's volatile RAM. The master password is never transmitted across the network. If an attacker breaches the storage database, they only obtain strongly encrypted ciphertext blobs that are mathematically impossible to decrypt without the master password.</p>
+                        </div>
+                    </div>
+
+                    <!-- Q4 -->
+                    <div class="viva-item">
+                        <div class="viva-question">
+                            <span>4. Why is PBKDF2 with 600,000 iterations used instead of simple SHA-256 or MD5?</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="viva-answer">
+                            <p>Standard cryptographic hash functions like SHA-256 and MD5 are designed to be extremely fast for data integrity checks. A modern consumer GPU can compute over <strong>3 billion SHA-256 hashes per second</strong>, allowing attackers to crack 8-character passwords in minutes.</p>
+                            <p style="margin-top: 8px;"><strong>PBKDF2 (Password-Based Key Derivation Function 2)</strong> implements <em>Key Stretching</em> by iterating HMAC-SHA256 hundreds of thousands of times (OWASP recommends 600,000 rounds for SHA-256). This imposes a steep computational and memory tax on brute-force attempts. A GPU that could test 3 billion passwords per second is throttled down to only a few thousand, rendering offline dictionary attacks economically and computationally infeasible.</p>
+                        </div>
+                    </div>
+
+                    <!-- Q5 -->
+                    <div class="viva-item">
+                        <div class="viva-question">
+                            <span>5. What is the role of Nonce/IV and why must it NEVER be reused in AES-GCM?</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="viva-answer">
+                            <p>An <strong>Initialization Vector (IV)</strong> or Nonce ensures that encrypting identical plaintext multiple times produces completely distinct ciphertexts, thwarting replay attacks and traffic pattern analysis.</p>
+                            <p style="margin-top: 8px;">In AES-GCM, reusing an IV with the same key is a cryptographic catastrophe known as the <em>"Forbidden Attack"</em>. Because GCM uses Counter (CTR) mode internally, identical IVs generate identical keystreams: <code>C1 &oplus; C2 = P1 &oplus; P2</code>. Furthermore, an attacker can solve polynomial equations over the Galois Field <code>GF(2<sup>128</sup>)</code> to recover the GHASH authentication subkey <code>H</code>, completely destroying both confidentiality and integrity authentication!</p>
+                        </div>
+                    </div>
+
+                    <!-- Q6 -->
+                    <div class="viva-item">
+                        <div class="viva-question">
+                            <span>6. How does k-Anonymity protect user privacy during breach checks?</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="viva-answer">
+                            <p>Traditionally, checking if a password is compromised required sending the password or its hash to a remote server, which introduces a severe privacy risk. The <strong>k-Anonymity model</strong> solves this mathematically:</p>
+                            <ol style="margin-left: 20px; margin-top: 6px;">
+                                <li>The client hashes the password using SHA-1 (e.g., <code>5BAA61E4C9B93F3F0682250B6CF8331B7EE68FD8</code>).</li>
+                                <li>The client takes ONLY the first 5 characters (prefix <code>5BAA6</code>) and queries the breach database.</li>
+                                <li>The server returns a list of hundreds of hash suffixes matching that 5-char prefix.</li>
+                                <li>The client performs the match locally in its own memory.</li>
+                            </ol>
+                            <p style="margin-top: 6px;">The remote server never sees the remaining 35 characters of the hash or the plaintext password, ensuring mathematical zero-knowledge privacy.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- ====================================================================
+             3. MASTER LOCK SCREEN OVERLAY
+             ==================================================================== -->
+        <div class="lock-screen-overlay" id="lockScreenOverlay">
+            <div class="lock-card">
+                <div class="lock-icon-orb">
+                    <i class="fa-solid fa-lock" id="lockScreenIcon"></i>
+                </div>
+                <h2 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; color: #fff;">
+                    AEGIS-VAULT
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 24px;">
+                    Zero-Knowledge AES-256-GCM Cryptographic Vault.<br>Enter master password to derive ephemeral encryption keys.
+                </p>
+
+                <div class="form-group" style="text-align: left;">
+                    <label for="masterPasswordInput">Master Password</label>
+                    <div style="position: relative;">
+                        <input type="password" id="masterPasswordInput" class="form-input" style="width: 100%; padding-right: 44px;" placeholder="Enter master password..." autocomplete="current-password">
+                        <button type="button" class="item-toggle-vis-btn" id="btnToggleMasterVis" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%);">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="entropy-meter-bar-container" style="margin-top: 8px;">
+                        <div class="entropy-meter-fill" id="masterStrengthFill"></div>
+                    </div>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);" id="masterStrengthLabel">Enter password to evaluate entropy</span>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                    <button class="btn-primary" id="btnUnlockVault" style="justify-content: center; padding: 12px; font-size: 1rem;">
+                        <i class="fa-solid fa-lock-open"></i> Unlock Encrypted Vault
+                    </button>
+                    <button class="btn-secondary" id="btnLoadDemoDataset" style="justify-content: center;">
+                        <i class="fa-solid fa-flask"></i> Load Demo CNS Academic Dataset
+                    </button>
+                </div>
+
+                <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.78rem; color: var(--text-muted);">
+                    <i class="fa-solid fa-shield-halved text-cyan"></i> NIST SP 800-38D &bull; PBKDF2 600k Rounds &bull; Zero Server Footprint
+                </div>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             4. ADD / EDIT ITEM MODAL
+             ==================================================================== -->
+        <div class="modal-overlay" id="itemModalOverlay">
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <h3 id="itemModalTitle" style="font-size: 1.2rem; color: #fff;">
+                        <i class="fa-solid fa-plus text-cyan"></i> New Vault Entry
+                    </h3>
+                    <button class="modal-close-btn" id="btnCloseItemModal">&times;</button>
+                </div>
+
+                <form id="vaultItemForm">
+                    <input type="hidden" id="itemIdField">
+
+                    <div class="form-group">
+                        <label for="itemCategoryField">Category</label>
+                        <select id="itemCategoryField" class="form-select">
+                            <option value="login">Login Credential</option>
+                            <option value="card">Payment Card</option>
+                            <option value="note">Secure Encrypted Note</option>
+                            <option value="api">API Key / Token</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="itemTitleField">Item Title / Service Name *</label>
+                        <input type="text" id="itemTitleField" class="form-input" placeholder="e.g. GitHub Enterprise" required>
+                    </div>
+
+                    <div class="form-group" id="usernameGroup">
+                        <label for="itemUsernameField">Username / Email / Identifier</label>
+                        <input type="text" id="itemUsernameField" class="form-input" placeholder="e.g. security_admin@company.com">
+                    </div>
+
+                    <div class="form-group" id="passwordGroup">
+                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                            <label for="itemPasswordField">Password / Secret Key *</label>
+                            <button type="button" class="btn-secondary" id="btnGenPasswordForModal" style="padding: 2px 8px; font-size: 0.75rem;">
+                                <i class="fa-solid fa-arrows-rotate"></i> Auto-Generate
+                            </button>
+                        </div>
+                        <div style="position: relative;">
+                            <input type="text" id="itemPasswordField" class="form-input" style="font-family: var(--font-mono); width: 100%;" placeholder="Enter or generate password..." required>
+                        </div>
+                        <div class="entropy-meter-bar-container" style="margin-top: 6px;">
+                            <div class="entropy-meter-fill" id="modalPasswordEntropyFill"></div>
+                        </div>
+                        <span id="modalPasswordEntropyLabel" style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">0 bits entropy</span>
+                    </div>
+
+                    <div class="form-group" id="urlGroup">
+                        <label for="itemUrlField">Target URL / Host</label>
+                        <input type="url" id="itemUrlField" class="form-input" placeholder="https://github.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="itemNotesField">Secure Notes (Encrypted)</label>
+                        <textarea id="itemNotesField" class="form-textarea" rows="3" placeholder="Two-factor recovery codes, PIN, or confidential notes..."></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+                        <button type="button" class="btn-secondary" id="btnCancelItemModal">Cancel</button>
+                        <button type="submit" class="btn-primary" id="btnSaveVaultItem">
+                            <i class="fa-solid fa-lock"></i> Encrypt & Save to Vault
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ====================================================================
+             5. CLIPBOARD SANITIZATION COUNTDOWN TOAST
+             ==================================================================== -->
+        <div class="clipboard-toast" id="clipboardToast">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-weight: 600; font-size: 0.88rem; color: var(--neon-cyan);">
+                    <i class="fa-solid fa-clipboard-check"></i> Credential Copied to Clipboard
+                </span>
+                <span id="clipboardCountdownSec" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">30s</span>
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-secondary); margin: 0;">
+                Memory sanitization active: Clipboard will be wiped automatically.
+            </p>
+            <div class="toast-progress-bar" id="toastProgressBar"></div>
+        </div>
+
+        <!-- Hidden file input for vault import -->
+        <input type="file" id="fileVaultImport" accept=".json,.aegis" style="display: none;">
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="crypto-core.js"></script>
+    <script src="aes-visualizer.js"></script>
+    <script src="attack-simulator.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
